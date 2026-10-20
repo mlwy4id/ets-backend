@@ -305,7 +305,12 @@ func (s *Store) hapusPeminjaman(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.peminjaman = append(s.peminjaman[:idx], s.peminjaman[idx+1:]...)
+	if s.peminjaman[idx].Status == "dibatalkan" {
+		writeError(w, 409, "peminjaman sudah dibatalkan")
+		return
+	}
+
+	s.peminjaman[idx].Status = "dibatalkan"
 
 	w.WriteHeader(204)
 }
