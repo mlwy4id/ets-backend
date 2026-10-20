@@ -29,10 +29,15 @@ Log yang jujur tidak mengurangi nilai, sebanyak apa pun AI dipakai. Yang mengura
 - Dipakai: buatPeminjaman, daftarPeminjaman, detailPeminjaman, ubahPeminjaman, hapusPeminjaman di handler_peminjaman.go
 - Diubah: deteksi bentrok dilakukan per slot dalam rentang, hanya hitung peminjaman status "aktif", di PUT skip peminjaman dengan id yang sedang diubah, semua dalam satu kunci mutex. PUT tidak mengubah id maupun status. Filter GET /peminjaman supports sumber_daya_id, tanggal, status. DELETE mengembalikan 204 tanpa body.
 
+## Handler blokir jadwal Persona E (handler_blokir.go)
+- Prompt: "handler Go net/http untuk POST, GET, DELETE blokir jadwal dengan validasi, cek irisan blokir, batalkan peminjaman yang terpengaruh, respons 201/200/204/400/404/409"
+- Dipakai: buatBlokir, daftarBlokir, hapusBlokir di handler_blokir.go; fungsi slotOverlap juga digunakan
+- Diubah: buatBlokir membatalkan peminjaman aktif yang beririsan slot (status → "dibatalkan"), respons 201 berisi {blokir, dibatalkan: []int}. Cek blokir juga ditambahkan di buatPeminjaman dan ubahPeminjaman (handler_peminjaman.go) → 409 jika slot bertabrakan blokir.
+
 ## Router (router.go dan main.go)
 - Prompt: "router Go http.NewServeMux dengan NewHandler() http.Handler dan main yang jalankan ListenAndServe :8080"
 - Dipakai: NewHandler di router.go, main di main.go
-- Diubah: menambahkan route POST/GET/GET{id}/PUT/DELETE untuk /sumber-daya dan /peminjaman.
+- Diubah: menambahkan route POST/GET/DELETE untuk /blokir dan /blokir/{id}.
 
 ## Verifikasi
-- go vet ./... dan go build ./... berhasil tanpa peringatan. Uji manual pakai curl untuk semua kasus B1, B2, B3, B4, B5, B6 lolos (201, 200, 204, 400 nama/jenis/stok/tanggal/slot/sumber daya/jumlah/id, 404, 409 bentrok, 400 filter sumber_daya_id non-angka).
+- go vet ./... dan go build ./... berhasil tanpa peringatan. Uji manual pakai curl untuk semua kasus B1–B7 dan Persona E lolos (201, 200, 204, 400, 404, 409; konkurensi 1×201 + 19×409 dari 20 request paralel; blokir membatalkan peminjaman dan mencegah peminjaman baru).

@@ -76,6 +76,14 @@ func (s *Store) buatPeminjaman(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	for _, b := range s.blokir {
+		if b.SumberDayaID == body.SumberDayaID && b.Tanggal == body.Tanggal &&
+			slotOverlap(b.SlotMulai, b.SlotSelesai, body.SlotMulai, body.SlotSelesai) {
+			writeError(w, 409, "slot diblokir")
+			return
+		}
+	}
+
 	p := Peminjaman{
 		ID:           s.nextPeminjamanID,
 		SumberDayaID: body.SumberDayaID,
@@ -245,6 +253,14 @@ func (s *Store) ubahPeminjaman(w http.ResponseWriter, r *http.Request) {
 		}
 		if terpakai+body.Jumlah > sd.Stok {
 			writeError(w, 409, "kapasitas slot terlampaui stok")
+			return
+		}
+	}
+
+	for _, b := range s.blokir {
+		if b.SumberDayaID == body.SumberDayaID && b.Tanggal == body.Tanggal &&
+			slotOverlap(b.SlotMulai, b.SlotSelesai, body.SlotMulai, body.SlotSelesai) {
+			writeError(w, 409, "slot diblokir")
 			return
 		}
 	}
